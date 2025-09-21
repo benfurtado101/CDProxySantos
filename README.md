@@ -3,5 +3,5 @@ Se tiver o n8n com plano pago, deve conseguir acessar o workflow pelo link: [htt
 Website com simulação de status e chatbot operacional em:
 https://benfurtado.eu/pcs-status/
 
-Pitch atualizado: 
+Pitch v.2: 
 https://drive.google.com/file/d/19j56qJ73HVAnc3IQH8RcsnPc1rOsGNHw/view?usp=drive_link
