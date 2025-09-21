@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PCS Status — Agência Marítima</title>
+  <meta name="description" content="Página simples com título 'PCS Status' e caixa de interação com Chatbot API para a Agência Marítima." />
+  <!--
+    COMO USAR NO WORDPRESS
+    1) Copie este arquivo inteiro e cole em um bloco "HTML Personalizado" (Gutenberg) em uma Página, ou
+    2) Salve como um arquivo .html e incorpore via Shortcode/iframe se preferir.
+    3) Ajuste a constante API_URL no <script> para apontar para sua API (GET por padrão).
+  -->
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #111730;
+      --panel-2: #0f1426;
+      --text: #e8eefc;
+      --muted: #a7b1c8;
+      --primary: #4da3ff;
+      --accent: #21d4a5;
+      --danger: #ff5c7a;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background: linear-gradient(180deg, var(--bg) 0%, #070b17 100%);
+      color: var(--text);
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(6px);
+      background: rgba(7,11,23,0.6);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .wrapper { max-width: 980px; margin: 0 auto; padding: 20px; }
+    h1 { margin: 0; font-size: 28px; letter-spacing: 0.3px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+    main { padding: 24px 0 40px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 0.8fr 1fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .card h2 { margin: 0; padding: 10px 18px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .card .body { padding: 16px; }
+
+    /* Status placeholders (opcional) */
+    .status-list { display: grid; gap: 12px; }
+    .status-item {
+      display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center;
+      padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(33,212,165,0.15); }
+    .status-name { font-weight: 600; }
+    .status-badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); color: var(--muted); }
+
+    /* Chatbot */
+    .chat {
+      display: flex; flex-direction: column; height: 520px;
+      border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .chat-log {
+      flex: 1; padding: 14px; overflow: auto; background: radial-gradient(1200px 600px at 10% -10%, rgba(77,163,255,0.07), transparent 40%),
+                                     radial-gradient(1000px 500px at 110% 30%, rgba(33,212,165,0.07), transparent 45%);
+    }
+    .msg { display: grid; grid-template-columns: 36px 1fr; gap: 10px; margin: 10px 0; }
+    .msg .avatar {
+      width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #0b1020;
+      background: var(--primary);
+    }
+    .msg.user .avatar { background: var(--accent); }
+    .bubble {
+      padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08); line-height: 1.4;
+    }
+    .msg.user .bubble { background: rgba(33,212,165,0.08); }
+
+    .chat-input {
+      padding: 12px; background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    input[type="text"], textarea {
+      width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(8,12,24,0.85); color: var(--text);
+    }
+
+
+    button {
+      padding: 0 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; height: 44px;
+      background: linear-gradient(180deg, var(--primary), #2b7ddc); color: #061226;
+      box-shadow: 0 6px 20px rgba(77,163,255,0.3);
+    }
+    button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .help { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .footnote { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .brand { color: var(--muted); font-size: 12px; text-align: center; margin-top: 10px; }
+    a { color: var(--primary); }
+  </style>
+  <!-- @n8n/chat CSS -->
+</head>
+<body>
+  <header>
+    <div class="wrapper">
+      <h1>PCS Status</h1>
+      <div class="subtitle">Agência Marítima • Monitoramento e suporte via Chatbot</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrapper grid">
+      <!-- Coluna: Painel de Status (opcional) -->
+      <section class="card" aria-labelledby="status-title">
+        <h2 id="status-title">Serviços Principais</h2>
+        <div class="body">
+          <div class="status-list" id="status-list">
+            <div class="status-item" role="status" aria-live="polite">
+              <span class="dot" title="operacional"></span>
+              <div>
+                <div class="status-name">PCS (Port Community System)</div>
+                <div class="help">Conexão e autenticação</div>
+              </div>
+              <span class="status-badge" id="badge-pcs">Operacional</span>
+            </div>
+            <div class="status-item" role="status">
+              <span class="dot" title="operacional"></span>
+              <div>
+                <div class="status-name">Manifesto & Gate</div>
+                <div class="help">Consulta de janelas e validação</div>
+              </div>
+              <span class="status-badge">Operacional</span>
+            </div>
+            <div class="status-item" role="status">
+              <span class="dot" title="operacional"></span>
+              <div>
+                <div class="status-name">Tracking de Navios</div>
+                <div class="help">ETA/ETD, berços e escalas</div>
+              </div>
+              <span class="status-badge">Operacional</span>
+            </div>
+          </div>
+          <div class="footnote">Estes indicadores são ilustrativos. Os APIs poderão ser atualizados conforme sua necessidade.</div>
+        </div>
+      </section>
+      <!-- Coluna: Chatbot (n8n) -->
+      <section class="card" aria-labelledby="chatbot-title">
+        <h2 id="chatbot-title">Atendimento — Chatbot API</h2>
+        <div class="body">
+          <div class="chat" role="region" aria-live="polite" aria-label="Conversa do chatbot">
+            <div id="chat-log" class="chat-log"></div>
+            <form id="chat-form" class="chat-input" autocomplete="off">
+              <div>
+              <label class="sr-only" for="user-input">Mensagem</label>
+              </div>
+
+              <textarea id="user-input" name="q" placeholder="Digite sua mensagem… (ex.: &quot;Status do PCS em Santos&quot;)" required rows="1" style="height: 100px; max-height: 200px; overflow-y: auto; margin-top: 10px; margin-bottom: 10px;"></textarea>
+
+              <button id="send-btn" type="submit">Enviar</button>
+            </form>
+          </div>
+          <div class="help">Integração com Sistemas PCS do Porto de Santos. <code>⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖ Equipe CD Proxy.</code> </div>
+          <div class="brand">© Agência Marítima — 2025</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <noscript>
+    <div class="wrapper">
+      <p>Este site requer JavaScript para a caixa de Chatbot.</p>
+    </div>
+  </noscript>
+
+  <script>
+    // ========= CONFIGURAÇÃO =========
+    // Defina aqui o endpoint da sua API.
+    // Por padrão, usamos GET e anexamos ?q= à URL.
+    // Ex.: API do WordPress: /wp-json/pcs/v1/chat
+    const API_URL = window.PCS_API_URL || 'https://n8n.hackathon.souamigu.org.br/webhook/4850bea4-9ce9-4bcf-a40c-cc7682a4f657/chat';
+    const API_METHOD = window.PCS_API_METHOD || 'POST'; // 'GET' ou 'POST'
+    const SESSION_ID = Math.random().toString(36).substring(2, 15);
+
+    /**
+     * Esperado que a API responda com:
+     *   { reply: string }  ou  { message: string }  ou  string
+     * Ajuste a função parseReply conforme sua API.
+     */
+    function parseReply(data) {
+      try {
+        if (typeof data === 'string') return data;
+        if (data && typeof data === 'object') {
+          return (data.output || data.reply || data.message || data.text || data.result || JSON.stringify(data));
+        }
+        return String(data);
+      } catch (e) {
+        return 'Não foi possível interpretar a resposta da API.';
+      }
+    }
+
+    // ========= UI do Chat =========
+    const log = document.getElementById('chat-log');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function el(tag, className, text) {
+      const n = document.createElement(tag);
+      if (className) n.className = className;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+
+    function appendMessage(role, text) {
+      const row = el('div', `msg ${role}`);
+      const avatar = el('div', 'avatar', role === 'user' ? 'U' : 'AI');
+      const bubble = el('div', 'bubble');
+      bubble.textContent = text;
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      log.appendChild(row);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Mensagem de boas-vindas
+    appendMessage('ai', 'Olá! Posso consultar o status do PCS, janelas de gate, ETA/ETD e mais. Como posso ajudar?');
+
+    async function callApi(query) {
+      const headers = { 'Accept': 'application/json' };
+      let url = API_URL;
+      let fetchOptions = { method: API_METHOD, headers, credentials: 'same-origin' };
+
+      if (API_METHOD.toUpperCase() === 'GET') {
+        const sep = API_URL.includes('?') ? '&' : '?';
+        url = `${API_URL}${sep}q=${encodeURIComponent(query)}`;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        fetchOptions.body = JSON.stringify({
+          action: "sendMessage",
+          chatInput: query,
+          sessionId: SESSION_ID,
+        });
+      }
+
+      const res = await fetch(url, fetchOptions);
+      const ct = res.headers.get('content-type') || '';
+      if (!res.ok) throw new Error('Erro na API: ' + res.status);
+
+      if (ct.includes('application/json')) {
+        // return parseReply(await res.json());
+        return res.output ?? parseReply(await res.json());
+      } else {
+        return await res.text();
+      }
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+
+      appendMessage('user', q);
+      input.value = '';
+      input.disabled = true;
+      sendBtn.disabled = true;
+
+      // Indicador de digitação
+      const thinking = el('div', 'msg ai');
+      thinking.appendChild(el('div', 'avatar', 'AI'));
+      const bubble = el('div', 'bubble', 'Processando…');
+      thinking.appendChild(bubble);
+      log.appendChild(thinking);
+      log.scrollTop = log.scrollHeight;
+
+      try {
+        const reply = await callApi(q);
+        bubble.textContent = reply || 'Sem conteúdo retornado.';
+      } catch (err) {
+        bubble.textContent = 'Não consegui acessar a API no momento. Verifique o endpoint em API_URL e as permissões (CORS).';
+      } finally {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+
+    // Acessibilidade: enviar com Enter
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        form.requestSubmit();
+      }
+    });
+  </script>
+  <!-- @n8n/chat script -->
+</body>
+</html>
