@@ -1,0 +1,343 @@
+{
+  "name": "PCS Status (CD Proxy Santos)",
+  "nodes": [
+    {
+      "parameters": {
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "Você é um organizador portuário de atracações e desatracações. A sua função é consultar e responder sobre informações de hora atual, Armador, Terminal Portuário, Rebocador e Praticagem. Se disponíveis, incluir informações da Agência Marítima.\nBasta usar o nome completo ou parcial do navio e listar as informações relevantes a esse navio.\nAntes de responder, consulte SEMPRE as quatro APIs via GET com os parâmetros extraídos da pergunta. Valide e reconcilie conforme necessário, e responda só baseado nas informações consultadas. Respostas devem ser dentro de até 350 caracteres. Termine a mensagem de resposta com 'Fonte: PCS'"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        224
+      ],
+      "id": "0c151f54-fa49-4a0d-a486-cec76c463d8f",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "options": {
+          "reasoningEffort": "low"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        400
+      ],
+      "id": "21b74b1b-a440-4d74-b820-11478736a9e5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "UBL0apUU1LWDhMtS",
+          "name": "OpenAi account 17"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        464
+      ],
+      "id": "994984e8-0a66-4be0-adbe-de3120b58650",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca informações dos navios por Armador",
+        "url": "https://api.hackathon.souamigu.org.br/armador",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        480
+      ],
+      "id": "5abdbf75-47bf-439d-8d11-5cd8ab8a6790",
+      "name": "Armador"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca informações do Terminal Portuário",
+        "url": "https://api.hackathon.souamigu.org.br/terminal-portuario",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        448
+      ],
+      "id": "da6327a5-09af-43bb-b39c-5b19ca40748a",
+      "name": "Terminal Portuário"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca informações do Rebocador",
+        "url": "https://api.hackathon.souamigu.org.br/rebocadores",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        944,
+        464
+      ],
+      "id": "3355506a-db89-4dea-8fc4-a2a5c40eefcd",
+      "name": "Rebocador"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca informações da Praticagem",
+        "url": "https://api.hackathon.souamigu.org.br/praticagem",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1056,
+        432
+      ],
+      "id": "e7eb0881-d9bf-4a9e-91c2-fb64ad266dbb",
+      "name": "Praticagem"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        176
+      ],
+      "id": "0a9afe0f-7d96-47f9-9459-81a5f029d56a",
+      "name": "When chat message received",
+      "webhookId": "4850bea4-9ce9-4bcf-a40c-cc7682a4f657"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        560,
+        448
+      ],
+      "id": "002be2c2-992f-4ef4-b148-3ddc34ce139a",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        464
+      ],
+      "id": "947a2357-30b3-45cd-9371-6ff773bb5bd5",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "UBL0apUU1LWDhMtS",
+          "name": "OpenAi account 17"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Checagem de status do servidor.",
+        "url": "https://api.hackathon.souamigu.org.br/health",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        240
+      ],
+      "id": "e9c1cb62-2a07-4ec2-b43f-00ac39d72012",
+      "name": "Status Servidor"
+    },
+    {
+      "parameters": {
+        "fromEmail": "time-52-r1@souamigu.org.br",
+        "toEmail": "time-52-r1@souamigu.org.br",
+        "subject": "Resposta a seu pedido de informação - PCS Santos",
+        "emailFormat": "text",
+        "text": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        144
+      ],
+      "id": "b44a204a-0d68-41e1-9d97-b55c4f464a99",
+      "name": "Send email",
+      "webhookId": "01ac3604-f78c-46af-a00b-c6210345f640",
+      "credentials": {
+        "smtp": {
+          "id": "pFMatGqSriFwgvCE",
+          "name": "SMTP account 7"
+        }
+      },
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armador": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Terminal Portuário": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rebocador": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Praticagem": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Status Servidor": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5daa8b61-a259-4048-842e-0d56b4643622",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21b80bbe30a7f15da69548d8c5b1a235d4d21f49c50c6d7cd7bab88b61c1e138"
+  },
+  "id": "f7BYAyCY2tJhokIX",
+  "tags": []
+}
